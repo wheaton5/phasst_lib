@@ -343,7 +343,8 @@ pub struct Variants {
     het_hic_variants: HashMap<i32, HashSet<i32>>,
 }
 
-pub fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_mols: &Vec<String>, kmers: &Kmers) -> (Variants, Molecules){
+pub fn load_molecule_kmers(txg_mols: &Option<Vec<String>>, hic_mols: &Option<Vec<String>>, 
+        longread_mols: &Option<Vec<String>>, kmers: &Kmers) -> (Variants, Molecules){
     let mut linked_read_variants: HashMap<i32, HashSet<i32>> = HashMap::new(); // map from variant_id to list of molecule_ids
     let _hic_variants: HashMap<i32, HashSet<i32>> = HashMap::new();
     let mut long_read_variants: HashMap<i32, HashSet<i32>> = HashMap::new();
@@ -376,59 +377,62 @@ pub fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longr
     let mut buf2 = [0u8; 4];
     let mut max_var = 0;
     let mut max_molid = 0;
-    for txg_file in txg_mols.iter() {
-        println!("{}",txg_file);
-        let f = File::open(txg_file.to_string())
-            .expect(&format!("Unable to open txg file {}", txg_file));
-        let mut reader = BufReader::new(f);
-        loop {
-            if let Some(barcode_id) = eat_i32(&mut reader, &mut bufi32) {
-                if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
-                    if kmer_id.abs() > max_var { max_var = kmer_id.abs() }
-                    if barcode_id > max_molid { max_molid = barcode_id; }
-                    match kmers.kmer_type.get(&kmer_id).unwrap() {
-                        KmerType::PairedHet => {
-                            let bc_vars = linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
-                            bc_vars.insert(kmer_id);
-                            paired_het_variants.insert(kmer_id.abs());
-                        },
-                        KmerType::UnpairedHet => {
-                            //eprintln!("unpaired het kmer");
-                            //let bc_vars = het_linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
-                            //bc_vars.insert(kmer_id);
-                            ()
-                        },
-                        KmerType::Homozygous => {
-                            let bc_vars = hom_linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
-                            bc_vars.insert(kmer_id);
-                            ()
-                        },
-                    }
-                    
+    if let Some(txg_mols) = txg_mols {
+        for txg_file in txg_mols.iter() {
+            println!("{}",txg_file);
+            let f = File::open(txg_file.to_string())
+                .expect(&format!("Unable to open txg file {}", txg_file));
+            let mut reader = BufReader::new(f);
+            loop {
+                if let Some(barcode_id) = eat_i32(&mut reader, &mut bufi32) {
+                    if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
+                        if kmer_id.abs() > max_var { max_var = kmer_id.abs() }
+                        if barcode_id > max_molid { max_molid = barcode_id; }
+                        match kmers.kmer_type.get(&kmer_id).unwrap() {
+                            KmerType::PairedHet => {
+                                let bc_vars = linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
+                                bc_vars.insert(kmer_id);
+                                paired_het_variants.insert(kmer_id.abs());
+                            },
+                            KmerType::UnpairedHet => {
+                                //eprintln!("unpaired het kmer");
+                                //let bc_vars = het_linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
+                                //bc_vars.insert(kmer_id);
+                                ()
+                            },
+                            KmerType::Homozygous => {
+                                let bc_vars = hom_linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
+                                bc_vars.insert(kmer_id);
+                                ()
+                            },
+                        }
+                        
+                    } else { break; }
                 } else { break; }
-            } else { break; }
+            }
         }
+        
+        eprintln!("reducing to good linked read molecules with > 5 variants, right now we have {}", linked_read_molecules.len());
+        //linked_read_molecules.retain(|_key, value| value.len() > 10 && value.len() < 5000); 
+        for (mol, varset) in linked_read_molecules.iter() {
+            for var in varset.iter() {
+                let var_bcs = linked_read_variants.entry(var.abs()).or_insert(HashSet::new());
+                if *var < 0 { var_bcs.insert(-mol); } else { var_bcs.insert(*mol); }
+            }
+        }
+        
+        eprintln!("{} good linked read molecules", linked_read_molecules.len());
+    
+        for (mol, varset) in hom_linked_read_molecules.iter() {
+            for var in varset.iter() {
+                let var_bcs = hom_linked_read_kmers.entry(*var).or_insert(HashSet::new());
+                var_bcs.insert(*mol);
+            }
+        }
+        
+        eprintln!("{} hom linked read molecules, {} hom linked read kmers",hom_linked_read_molecules.len(), hom_linked_read_kmers.len());
     }
     
-    eprintln!("reducing to good linked read molecules with > 5 variants, right now we have {}", linked_read_molecules.len());
-    //linked_read_molecules.retain(|_key, value| value.len() > 10 && value.len() < 5000); 
-    for (mol, varset) in linked_read_molecules.iter() {
-        for var in varset.iter() {
-            let var_bcs = linked_read_variants.entry(var.abs()).or_insert(HashSet::new());
-            if *var < 0 { var_bcs.insert(-mol); } else { var_bcs.insert(*mol); }
-        }
-    }
-    
-    eprintln!("{} good linked read molecules", linked_read_molecules.len());
-   
-    for (mol, varset) in hom_linked_read_molecules.iter() {
-        for var in varset.iter() {
-            let var_bcs = hom_linked_read_kmers.entry(*var).or_insert(HashSet::new());
-            var_bcs.insert(*mol);
-        }
-    }
-    
-    eprintln!("{} hom linked read molecules, {} hom linked read kmers",hom_linked_read_molecules.len(), hom_linked_read_kmers.len());
     //molecules.clear();
 
     /*
@@ -455,135 +459,139 @@ pub fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longr
     }
     */
     let mut mol_id = max_molid + 1;
-    for hic_file in hic_mols.iter() {
-        let f = File::open(hic_file.to_string())
-            .expect(&format!("Unable to open hic file {}", hic_file));
-        let mut reader = BufReader::new(f);
-        'outerhic: loop { // now deal with hic data, format is i32s until you hit a 0 if i get to 2 0's we are done
-            //break 'outerhic;
-            let mut vars: HashSet<i32> = HashSet::new();
-            let mut vars2: Vec<i32> = Vec::new();
-            loop {
-                if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
-                    //println!("kmer id {}", kmer_id);
+    if let Some(hic_mols) = hic_mols {
+        for hic_file in hic_mols.iter() {
+            let f = File::open(hic_file.to_string())
+                .expect(&format!("Unable to open hic file {}", hic_file));
+            let mut reader = BufReader::new(f);
+            'outerhic: loop { // now deal with hic data, format is i32s until you hit a 0 if i get to 2 0's we are done
+                //break 'outerhic;
+                let mut vars: HashSet<i32> = HashSet::new();
+                let mut vars2: Vec<i32> = Vec::new();
+                loop {
+                    if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
+                        //println!("kmer id {}", kmer_id);
 
-                    if kmer_id == 0 { if vars.len() == 0 { break 'outerhic; } else { break; } }
-                    match kmers.kmer_type.get(&kmer_id).unwrap() {
-                        KmerType::PairedHet => {
-                            //eprintln!("paired het kmer");
-                                vars.insert(kmer_id); 
+                        if kmer_id == 0 { if vars.len() == 0 { break 'outerhic; } else { break; } }
+                        match kmers.kmer_type.get(&kmer_id).unwrap() {
+                            KmerType::PairedHet => {
+                                //eprintln!("paired het kmer");
+                                    vars.insert(kmer_id); 
+                                    vars2.push(kmer_id);
+                                ()
+                            },
+                            KmerType::UnpairedHet => {
+                                //eprintln!("unpaired het kmer");
+                                //vars.insert(kmer_id); 
                                 vars2.push(kmer_id);
-                            ()
-                        },
-                        KmerType::UnpairedHet => {
-                            //eprintln!("unpaired het kmer");
-                            //vars.insert(kmer_id); 
-                            vars2.push(kmer_id);
-                            //let bc_vars = het_linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
-                            //bc_vars.insert(kmer_id);
-                            ()
-                        },
-                        KmerType::Homozygous => {
-                            //eprintln!("homozygous kmer");
-                            //vars.insert(kmer_id); 
-                            vars2.push(kmer_id);
-                            //let bc_vars = hom_linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
-                            //bc_vars.insert(kmer_id);
-                            ()
-                        },
-                    }
-                    //if !bad_var_set.contains(&kmer_id.abs()) {
-                    
-                    
-                    if kmer_id.abs() > max_var { max_var = kmer_id.abs() }
-                    //}
-                } else { break 'outerhic; }
-            }
-            mol_id += 1;
-            if vars.len() > 1 {
-                hic_molecules.insert(mol_id, vars);
+                                //let bc_vars = het_linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
+                                //bc_vars.insert(kmer_id);
+                                ()
+                            },
+                            KmerType::Homozygous => {
+                                //eprintln!("homozygous kmer");
+                                //vars.insert(kmer_id); 
+                                vars2.push(kmer_id);
+                                //let bc_vars = hom_linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
+                                //bc_vars.insert(kmer_id);
+                                ()
+                            },
+                        }
+                        //if !bad_var_set.contains(&kmer_id.abs()) {
+                        
+                        
+                        if kmer_id.abs() > max_var { max_var = kmer_id.abs() }
+                        //}
+                    } else { break 'outerhic; }
+                }
+                mol_id += 1;
+                if vars.len() > 1 {
+                    hic_molecules.insert(mol_id, vars);
+                }
             }
         }
+        eprintln!("num hic molecules is {}", hic_molecules.len());
     }
-
-    eprintln!("num hic molecules is {}", hic_molecules.len());
     
     mol_id += 1; 
     let mut longread_mol_id_starts: Vec<i32> = Vec::new();
-    for longread_file in longread_mols.iter() {
-        longread_mol_id_starts.push(mol_id);
-        let f = File::open(longread_file.to_string())
-            .expect(&format!("Unable to open longread file {}", longread_file));
-        let mut reader = BufReader::new(f);
-        'outer: loop { // ok here we go again. Pacbio/longread data. Format is i32s until you hit a zero. when you hit two zeros you are done
-            let mut vars: HashSet<i32> = HashSet::new();
-            let mut varlist: Vec<i32> = Vec::new();
-            let mut varlist_positions: Vec<i32> = Vec::new();
-            let mut hom_kmers: HashSet<i32> = HashSet::new();
-            let mut het_kmers: HashSet<i32> = HashSet::new();
-            let mut het_kmers_list: Vec<i32> = Vec::new();
-            loop {
-                if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
-                    
-                    if kmer_id == 0 { break; }
-                    if let Some(position) = eat_i32(&mut reader, &mut buf2) {
-                        let position = position + 10;
-                        if kmer_id.abs() > max_var { max_var = kmer_id.abs(); }
-                        match kmers.kmer_type.get(&kmer_id) {
-                            Some(KmerType::PairedHet) => {
-                                vars.insert(kmer_id);
-                                paired_het_variants.insert(kmer_id.abs());
-                                varlist.push(kmer_id);
-                                varlist_positions.push(position);
-                            },
-                            Some(KmerType::UnpairedHet) => {
-                                het_kmers.insert(kmer_id);
-                                het_kmers_list.push(kmer_id);
-                            },
-                            Some(KmerType::Homozygous) => {
-                                hom_kmers.insert(kmer_id);
-                            },
-                            None => { eprintln!("no kmer type? {}", kmer_id); }
+    if let Some(longread_mols) = longread_mols {
+        for longread_file in longread_mols.iter() {
+            longread_mol_id_starts.push(mol_id);
+            let f = File::open(longread_file.to_string())
+                .expect(&format!("Unable to open longread file {}", longread_file));
+            let mut reader = BufReader::new(f);
+            'outer: loop { // ok here we go again. Pacbio/longread data. Format is i32s until you hit a zero. when you hit two zeros you are done
+                let mut vars: HashSet<i32> = HashSet::new();
+                let mut varlist: Vec<i32> = Vec::new();
+                let mut varlist_positions: Vec<i32> = Vec::new();
+                let mut hom_kmers: HashSet<i32> = HashSet::new();
+                let mut het_kmers: HashSet<i32> = HashSet::new();
+                let mut het_kmers_list: Vec<i32> = Vec::new();
+                loop {
+                    if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
+                        
+                        if kmer_id == 0 { break; }
+                        if let Some(position) = eat_i32(&mut reader, &mut buf2) {
+                            let position = position + 10;
+                            if kmer_id.abs() > max_var { max_var = kmer_id.abs(); }
+                            match kmers.kmer_type.get(&kmer_id) {
+                                Some(KmerType::PairedHet) => {
+                                    vars.insert(kmer_id);
+                                    paired_het_variants.insert(kmer_id.abs());
+                                    varlist.push(kmer_id);
+                                    varlist_positions.push(position);
+                                },
+                                Some(KmerType::UnpairedHet) => {
+                                    het_kmers.insert(kmer_id);
+                                    het_kmers_list.push(kmer_id);
+                                },
+                                Some(KmerType::Homozygous) => {
+                                    hom_kmers.insert(kmer_id);
+                                },
+                                None => { eprintln!("no kmer type? {}", kmer_id); }
+                            }
                         }
+                    } else { break 'outer; }
+                }
+                    for kmer_id in vars.iter() {
+                        let var_bcs = long_read_variants.entry(kmer_id.abs()).or_insert(HashSet::new());
+                        if kmer_id < &0 { var_bcs.insert(-mol_id); } else { var_bcs.insert(mol_id); }
                     }
-                } else { break 'outer; }
-            }
-                for kmer_id in vars.iter() {
-                    let var_bcs = long_read_variants.entry(kmer_id.abs()).or_insert(HashSet::new());
-                    if kmer_id < &0 { var_bcs.insert(-mol_id); } else { var_bcs.insert(mol_id); }
+                    long_read_molecules.insert(mol_id, vars); 
+                    long_read_molecule_list.insert(mol_id, varlist);
+                    long_read_molecule_positions.insert(mol_id, varlist_positions);
+                    long_read_het_molecules.insert(mol_id, het_kmers);
+                    long_read_het_molecule_list.insert(mol_id, het_kmers_list);
+                    
+                    
+                /*
+                if het_kmers.len() > 0 {
+                    for kmer_id in het_kmers.iter() {
+                        let var_bcs = het_long_read_kmers.entry(*kmer_id).or_insert(HashSet::new());
+                        var_bcs.insert(mol_id);
+                    }
                 }
-                long_read_molecules.insert(mol_id, vars); 
-                long_read_molecule_list.insert(mol_id, varlist);
-                long_read_molecule_positions.insert(mol_id, varlist_positions);
-                long_read_het_molecules.insert(mol_id, het_kmers);
-                long_read_het_molecule_list.insert(mol_id, het_kmers_list);
+                */
+                if hom_kmers.len() > 0 {
+                    for kmer_id in hom_kmers.iter() {
+                        let var_bcs = hom_long_read_kmers.entry(*kmer_id).or_insert(HashSet::new());
+                        var_bcs.insert(mol_id);
+                    }
+                }
+                hom_long_read_molecules.insert(mol_id, hom_kmers);
+                mol_id += 1;
                 
-                
-            /*
-            if het_kmers.len() > 0 {
-                for kmer_id in het_kmers.iter() {
-                    let var_bcs = het_long_read_kmers.entry(*kmer_id).or_insert(HashSet::new());
-                    var_bcs.insert(mol_id);
-                }
             }
-            */
-            if hom_kmers.len() > 0 {
-                for kmer_id in hom_kmers.iter() {
-                    let var_bcs = hom_long_read_kmers.entry(*kmer_id).or_insert(HashSet::new());
-                    var_bcs.insert(mol_id);
-                }
-            }
-            hom_long_read_molecules.insert(mol_id, hom_kmers);
-            mol_id += 1;
-            
         }
+        
+        //long_read_molecules.retain(|_key, value| value.len() > 1 && value.len() < 5000); 
+        eprintln!("{} good long read molecules", long_read_molecules.len());
+        
+        eprintln!("{} hom long read kmers, {} hom read long molecules", hom_long_read_kmers.len(), hom_long_read_molecules.len());
+
     }
     
-    //long_read_molecules.retain(|_key, value| value.len() > 1 && value.len() < 5000); 
-    eprintln!("{} good long read molecules", long_read_molecules.len());
-    
-    eprintln!("{} hom long read kmers, {} hom read long molecules", hom_long_read_kmers.len(), hom_long_read_molecules.len());
-
     
 
     let mut txg_vars: Vec<Vec<i32>> = Vec::new();
