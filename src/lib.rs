@@ -733,13 +733,13 @@ fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_
 }
 
 #[derive(PartialEq)]
-enum KmerType {
+pub enum KmerType {
     PairedHet,
     UnpairedHet,
     Homozygous,
 }
 
-struct Kmers {
+pub struct Kmers {
     kmers: HashMap<i32, String>,
     kmer_counts: HashMap<i32, i32>,
     kmer_type: HashMap<i32, KmerType>,
