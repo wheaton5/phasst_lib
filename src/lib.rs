@@ -24,7 +24,7 @@ fn eat_i32<R: Read>(reader: &mut BufReader<R>, buf: &mut [u8;4]) -> Option<i32> 
 }
 
 #[allow(dead_code)]
-struct Molecules {
+pub struct Molecules {
     //long_read_molecule_list: Vec<i32>,
     longread_molid_offsets: Vec<i32>,
     linked_read_molecules: HashMap<i32, Vec<i32>>,
@@ -43,35 +43,35 @@ struct Molecules {
 }
 
 impl Molecules {
-    fn get_linked_read_variants<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_linked_read_variants<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.linked_read_molecules.get(&mol.abs()) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_long_read_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_long_read_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&i32>+'a> {
         Box::new(self.long_read_molecules.keys())
     }
-    fn get_linked_read_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_linked_read_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&i32>+'a> {
         Box::new(self.linked_read_molecules.keys())
     }
 
-    fn get_hic_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_hic_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&i32>+'a> {
         Box::new(self.hic_molecules.keys())
     }
-    fn get_long_read_variants<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_long_read_variants<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.long_read_molecules.get(&mol.abs()) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_long_read_variants_ordered<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_long_read_variants_ordered<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.long_read_molecule_list.get(&mol.abs()) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_long_read_variants_and_positions<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=(&i32, &i32)>+'a> {
+    pub fn get_long_read_variants_and_positions<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=(&i32, &i32)>+'a> {
         match self.long_read_molecule_list.get(&mol.abs()) {
 
             Some(x) => {
@@ -83,51 +83,51 @@ impl Molecules {
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_hic_variants<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_hic_variants<'a>(&'a self, mol: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.hic_molecules.get(&mol.abs()) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_hom_linked_read_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_hom_linked_read_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.hom_linked_read_molecules.get(i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_hom_long_read_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_hom_long_read_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.hom_long_read_molecules.get(i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
 
-    fn get_hom_hic_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_hom_hic_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.hom_hic_molecules.get(i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
 
-    fn get_het_linked_read_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_het_linked_read_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.het_linked_read_molecules.get(i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_het_long_read_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_het_long_read_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.het_long_read_molecules.get(i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_het_hic_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_het_hic_variants<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.het_long_read_molecules.get(i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_variants<'a>(&'a self, i: &i32, kmer_type: KmerType) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_variants<'a>(&'a self, i: &i32, kmer_type: KmerType) -> Box<dyn Iterator<Item=&i32>+'a> {
         match kmer_type {
             KmerType::PairedHet => Box::new(
                     self.get_linked_read_variants(*i).chain(
@@ -146,63 +146,63 @@ impl Molecules {
 }
 
 impl Variants {
-    fn get_variant_iter<'a>(&'a self, kmer_type: KmerType) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_variant_iter<'a>(&'a self, kmer_type: KmerType) -> Box<dyn Iterator<Item=&i32>+'a> {
         match kmer_type {
             KmerType::PairedHet => Box::new(self.paired_het_variants.iter()),
             KmerType::UnpairedHet => Box::new(std::iter::empty()),
             KmerType::Homozygous => Box::new(std::iter::empty()),
         }
     }
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         return self.linked_read_variants.len();
     }
-    fn get_linked_read_molecules(&self, i: i32) -> std::slice::Iter<'_, i32> {
+    pub fn get_linked_read_molecules(&self, i: i32) -> std::slice::Iter<'_, i32> {
         return self.linked_read_variants[(i.abs() - 1) as usize].iter();
     }
-    fn get_num_linked_read_molecules(&self, i: i32) -> usize {
+    pub fn get_num_linked_read_molecules(&self, i: i32) -> usize {
         return self.linked_read_variants[(i.abs() - 1) as usize].len();
     }
-    fn get_long_read_molecules(&self, i: i32) -> std::slice::Iter<'_, i32> {
+    pub fn get_long_read_molecules(&self, i: i32) -> std::slice::Iter<'_, i32> {
         return self.long_read_variants[(i.abs() - 1) as usize].iter();
     }
-    fn get_num_long_read_molecules(&self, i: i32) -> usize {
+    pub fn get_num_long_read_molecules(&self, i: i32) -> usize {
         return self.long_read_variants[(i.abs() - 1) as usize].len();
     }
-    fn get_hic_molecules(&self, i: i32) -> std::slice::Iter<'_, i32> {
+    pub fn get_hic_molecules(&self, i: i32) -> std::slice::Iter<'_, i32> {
         return self.hic_variants[(i.abs() - 1) as usize].iter();
     }
-    fn get_num_hic_molecules(&self, i: i32) -> usize {
+    pub fn get_num_hic_molecules(&self, i: i32) -> usize {
         return self.hic_variants[(i.abs() - 1) as usize].len();
     }
     #[allow(dead_code)]
-    fn get_hom_linked_read_molecules<'a>(&'a self, i: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_hom_linked_read_molecules<'a>(&'a self, i: i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.hom_linked_read_variants.get(&i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
     #[allow(dead_code)]
-    fn get_hom_long_read_molecules<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_hom_long_read_molecules<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.hom_long_read_variants.get(i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
     #[allow(dead_code)]
-    fn get_het_linked_read_molecules<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_het_linked_read_molecules<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.het_linked_read_variants.get(i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
     #[allow(dead_code)]
-    fn get_het_long_read_molecules<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
+    pub fn get_het_long_read_molecules<'a>(&'a self, i: &i32) -> Box<dyn Iterator<Item=&i32>+'a> {
         match self.het_long_read_variants.get(i) {
             Some(x) => Box::new(x.iter()),
             None => Box::new(std::iter::empty()),
         }
     }
-    fn get_molecules<'a>(&'a self, i: &i32, data_type: DataType) 
+    pub fn get_molecules<'a>(&'a self, i: &i32, data_type: DataType) 
             -> Box<dyn Iterator<Item=&i32>+'a> {
         match data_type {
             DataType::HC => Box::new(self.get_hic_molecules(*i)),
@@ -211,7 +211,7 @@ impl Variants {
             DataType::PBLR => Box::new(self.get_long_read_molecules(*i).chain(self.get_linked_read_molecules(*i))),
         }
     }
-    fn get_num_molecules(&self, i: &i32, data_type: DataType) -> usize {
+    pub fn get_num_molecules(&self, i: &i32, data_type: DataType) -> usize {
         match data_type {
             DataType::HC => self.get_num_hic_molecules(*i),
             DataType::PB => self.get_num_long_read_molecules(*i),
@@ -222,7 +222,7 @@ impl Variants {
 }
 
 #[allow(dead_code)]
-enum DataType {
+pub enum DataType {
     HC, // hic
     PB, // pacbio
     LR, // linked reads
@@ -321,19 +321,6 @@ fn load_crib(crib: &String, kmers: &Kmers) -> Crib {
         mol_id += 1;
         
     }
-    /*
-    println!("{}",ordered_kmers.len());
-    println!("chrom\tpos\tkmer\thits\tkmer_count\thas_pair\tpair_chrom\tpair_pos\tpair_id\tpair_hits\tpair_count");
-    for (mol, kmer, position) in ordered_kmers {
-        let (_, num, _) = variants.get(&kmer).unwrap();
-        if let Some((mol2, num2, position2)) = variants.get(&pair(kmer.abs())) {
-            println!("{}\t{}\t{}\t{}\t{}\ttrue\t{}\t{}\t{}\t{}\t{}", mol, position, kmers.kmers.get(&kmer).unwrap(), num, kmers.kmer_counts.get(&kmer).unwrap(), 
-                mol2, position2, kmers.kmers.get(&pair(kmer)).unwrap(), num2, kmers.kmer_counts.get(&pair(kmer.abs())).unwrap());
-        } else {
-            println!("{}\t{}\t{}\t{}\t{}\tfalse\tnone\tnone\tnone\tnone\tnone", mol, position, kmers.kmers.get(&kmer).unwrap(), num, kmers.kmer_counts.get(&kmer).unwrap());
-        }
-    } 
-    */
 
     Crib{
         variants: variants,
@@ -342,7 +329,7 @@ fn load_crib(crib: &String, kmers: &Kmers) -> Crib {
 }
 
 #[allow(dead_code)]
-struct Variants {
+pub struct Variants {
     paired_het_variants: HashSet<i32>,
     linked_read_variants: Vec<Vec<i32>>,
     hic_variants: Vec<Vec<i32>>,
@@ -356,7 +343,7 @@ struct Variants {
     het_hic_variants: HashMap<i32, HashSet<i32>>,
 }
 
-fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_mols: &Vec<String>, kmers: &Kmers) -> (Variants, Molecules){
+pub fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_mols: &Vec<String>, kmers: &Kmers) -> (Variants, Molecules){
     let mut linked_read_variants: HashMap<i32, HashSet<i32>> = HashMap::new(); // map from variant_id to list of molecule_ids
     let _hic_variants: HashMap<i32, HashSet<i32>> = HashMap::new();
     let mut long_read_variants: HashMap<i32, HashSet<i32>> = HashMap::new();
@@ -397,12 +384,10 @@ fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_
         loop {
             if let Some(barcode_id) = eat_i32(&mut reader, &mut bufi32) {
                 if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
-                    //if barcode_id == 0 && kmer_id == 0 { break; } // only dealing with 10x data so far
                     if kmer_id.abs() > max_var { max_var = kmer_id.abs() }
                     if barcode_id > max_molid { max_molid = barcode_id; }
                     match kmers.kmer_type.get(&kmer_id).unwrap() {
                         KmerType::PairedHet => {
-                            //eprintln!("paired het kmer");
                             let bc_vars = linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
                             bc_vars.insert(kmer_id);
                             paired_het_variants.insert(kmer_id.abs());
@@ -414,15 +399,11 @@ fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_
                             ()
                         },
                         KmerType::Homozygous => {
-                            //eprintln!("homozygous kmer adding to hom_lingked_read_molecules");
                             let bc_vars = hom_linked_read_molecules.entry(barcode_id).or_insert(HashSet::new());
                             bc_vars.insert(kmer_id);
                             ()
                         },
                     }
-                    
-                    //println!("bc {} kmer id {}",barcode_id, kmer_id);
-                    
                     
                 } else { break; }
             } else { break; }
@@ -437,28 +418,10 @@ fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_
             if *var < 0 { var_bcs.insert(-mol); } else { var_bcs.insert(*mol); }
         }
     }
-    /* WHAT DOES THIS EVEN DO
-    for (var, mols) in linked_read_variants.iter() {
-        if mols.len() < 30 {
-            for mol in mols.iter() {
-                let vars = linked_read_molecules.get_mut(&mol.abs()).unwrap();
-                vars.remove(&var);
-                vars.remove(&-var);
-            }
-        }
-    }
-    */
-    eprintln!("{} good molecules", linked_read_molecules.len());
-    /*
-    for (mol, varset) in het_linked_read_molecules.iter() {
-        for var in varset.iter() {
-            let var_bcs = het_linked_read_kmers.entry(*var).or_insert(HashSet::new());
-            var_bcs.insert(*mol);
-        }
-    }
-    */
+    
+    eprintln!("{} good linked read molecules", linked_read_molecules.len());
+   
     for (mol, varset) in hom_linked_read_molecules.iter() {
-        //eprintln!("mol {} with varset length {}", mol, varset.len());
         for var in varset.iter() {
             let var_bcs = hom_linked_read_kmers.entry(*var).or_insert(HashSet::new());
             var_bcs.insert(*mol);
@@ -542,11 +505,10 @@ fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_
             }
         }
     }
-    
- 
+
     eprintln!("num hic molecules is {}", hic_molecules.len());
     
-    mol_id += 1; //
+    mol_id += 1; 
     let mut longread_mol_id_starts: Vec<i32> = Vec::new();
     for longread_file in longread_mols.iter() {
         longread_mol_id_starts.push(mol_id);
@@ -584,11 +546,8 @@ fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_
                             None => { eprintln!("no kmer type? {}", kmer_id); }
                         }
                     }
-                    //eat_i32(&mut reader, &mut bufi32); //TODO get rid of this old format
-                    
                 } else { break 'outer; }
             }
-            //if vars.len() > 0 { 
                 for kmer_id in vars.iter() {
                     let var_bcs = long_read_variants.entry(kmer_id.abs()).or_insert(HashSet::new());
                     if kmer_id < &0 { var_bcs.insert(-mol_id); } else { var_bcs.insert(mol_id); }
@@ -600,7 +559,6 @@ fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_
                 long_read_het_molecule_list.insert(mol_id, het_kmers_list);
                 
                 
-            //}
             /*
             if het_kmers.len() > 0 {
                 for kmer_id in het_kmers.iter() {
@@ -627,12 +585,6 @@ fn load_molecule_kmers(txg_mols: &Vec<String>, hic_mols: &Vec<String>, longread_
     eprintln!("{} hom long read kmers, {} hom read long molecules", hom_long_read_kmers.len(), hom_long_read_molecules.len());
 
     
-    //for var in &vars_to_remove {
-    //    linked_read_variants.insert(*var, HashSet::new());
-    //    hic_variants.insert(*var, HashSet::new());
-    //    long_read_variants.insert(*var, HashSet::new());
-    //}
-    //println!("found {} bad vars", bad_vars);
 
     let mut txg_vars: Vec<Vec<i32>> = Vec::new();
     let mut hic_vars: Vec<Vec<i32>> = Vec::new();
