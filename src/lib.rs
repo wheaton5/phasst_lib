@@ -237,7 +237,7 @@ struct Assembly {
 }
 
 
-fn load_assembly(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
+fn load_assembly_kmers(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
     let mut mol_id = 1;
     let mut variants: HashMap<i32, (i32, usize, usize)> = HashMap::new();
     let mut molecules: HashMap<i32, HashMap<i32, (usize, usize)>> = HashMap::new();
