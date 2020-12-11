@@ -746,7 +746,7 @@ pub struct Kmers {
 }
 
 impl Kmers {
-    fn pair(v: i32) -> i32 {
+    pub fn pair(v: i32) -> i32 {
         if v < 0 { 
             if v % 2 == 0 { v + 1 } 
             else { v - 1 } 
@@ -757,7 +757,7 @@ impl Kmers {
         }
     }
 
-    fn load_kmers(kmerfile: &String) -> Kmers {
+    pub fn load_kmers(kmerfile: &String) -> Kmers {
         let mut kmers: HashMap<i32, String> = HashMap::new();
         let mut kmer_id: i32 = 1; // no 0 kmer id as we are using sign for which of the pair
         let mut kmer_type: HashMap<i32, KmerType> = HashMap::new();
