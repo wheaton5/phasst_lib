@@ -231,13 +231,13 @@ pub enum DataType {
 
 
 
-struct Assembly {
+pub struct Assembly {
     variants: HashMap<i32, (i32, usize, usize)>, // map from kmer_id to crib molecule id and number seen and position
     molecules: HashMap<i32, HashMap<i32, (usize, usize)>>, // map from crib molecule id to a map from kmer_id to order index
 }
 
 
-fn load_assembly_kmers(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
+pub fn load_assembly_kmers(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
     let mut mol_id = 1;
     let mut variants: HashMap<i32, (i32, usize, usize)> = HashMap::new();
     let mut molecules: HashMap<i32, HashMap<i32, (usize, usize)>> = HashMap::new();
