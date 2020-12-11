@@ -229,12 +229,15 @@ pub enum DataType {
     PBLR, //pb and lr
 }
 
-struct Crib {
+
+
+struct Assembly {
     variants: HashMap<i32, (i32, usize, usize)>, // map from kmer_id to crib molecule id and number seen and position
     molecules: HashMap<i32, HashMap<i32, (usize, usize)>>, // map from crib molecule id to a map from kmer_id to order index
 }
 
-fn load_crib(crib: &String, kmers: &Kmers) -> Crib {
+
+fn load_assembly(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
     let mut mol_id = 1;
     let mut variants: HashMap<i32, (i32, usize, usize)> = HashMap::new();
     let mut molecules: HashMap<i32, HashMap<i32, (usize, usize)>> = HashMap::new();
@@ -247,8 +250,8 @@ fn load_crib(crib: &String, kmers: &Kmers) -> Crib {
     let mut hom_long_read_molecules: HashMap<i32, HashSet<i32>> = HashMap::new();
     let mut bufi32 = [0u8; 4];
     let mut buf2 = [0u8; 4];
-    let f = File::open(crib)
-        .expect(&format!("Unable to open crib {}", crib));
+    let f = File::open(assembly_kmers)
+        .expect(&format!("Unable to open crib {}", assembly_kmers));
     let mut reader = BufReader::new(f);
     let mut ordered_kmers: Vec<(i32, i32, usize)> = Vec::new();
     'outer: loop { // ok here we go again. Pacbio/longread data. Format is i32s until you hit a zero. when you hit two zeros you are done
@@ -322,7 +325,7 @@ fn load_crib(crib: &String, kmers: &Kmers) -> Crib {
         
     }
 
-    Crib{
+    Assembly {
         variants: variants,
         molecules: molecules,
     }
