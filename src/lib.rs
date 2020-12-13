@@ -232,14 +232,14 @@ pub enum DataType {
 
 
 pub struct Assembly {
-    pub variants: HashMap<i32, (i32, usize, usize)>, // map from kmer_id to crib molecule id and number seen and position
+    pub variants: HashMap<i32, (i32, usize, usize, usize)>, // map from kmer_id to crib molecule id and number seen, order and position
     pub molecules: HashMap<i32, HashMap<i32, (usize, usize)>>, // map from crib molecule id to a map from kmer_id to order index
 }
 
 
 pub fn load_assembly_kmers(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
     let mut mol_id = 1;
-    let mut variants: HashMap<i32, (i32, usize, usize)> = HashMap::new();
+    let mut variants: HashMap<i32, (i32, usize, usize, usize)> = HashMap::new();
     let mut molecules: HashMap<i32, HashMap<i32, (usize, usize)>> = HashMap::new();
 
     let mut paired_het_variants: HashSet<i32> = HashSet::new();
@@ -282,16 +282,16 @@ pub fn load_assembly_kmers(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
                             vars.insert(kmer_id);
                             paired_het_variants.insert(kmer_id.abs());
                             varlist.push(kmer_id);
-                             if let Some((mol, num, pos)) = variants.get(&kmer_id.abs()) {
+                            if let Some((mol, num, order, pos)) = variants.get(&kmer_id.abs()) {
                                 molecule = *mol;
                                 number = *num;
                                 position1 = *pos;
                                 has = true;
                             } else {
-                                variants.insert(kmer_id.abs(), (mol_id, 1, position as usize));
+                                variants.insert(kmer_id.abs(), (mol_id, 1, order, position as usize));
                             }
                             if has {
-                                variants.insert(kmer_id.abs(), (mol_id, number+1, position as usize));
+                                variants.insert(kmer_id.abs(), (mol_id, number+1, order, position as usize));
                             }
                         },
                         Some(KmerType::UnpairedHet) => {
