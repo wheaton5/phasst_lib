@@ -27,8 +27,8 @@ fn eat_i32<R: Read>(reader: &mut BufReader<R>, buf: &mut [u8;4]) -> Option<i32> 
 pub struct Molecules {
     //long_read_molecule_list: Vec<i32>,
     longread_molid_offsets: Vec<i32>,
-    linked_read_molecules: HashMap<i32, Vec<i32>>,
-    hic_molecules: HashMap<i32, Vec<i32>>,
+    linked_read_molecules: HashMap<i32, Vec<i32>>, // map from long read id to list of kmer_ids
+    hic_molecules: HashMap<i32, Vec<i32>>, // map from hic read id to list of kmers
     long_read_molecules: HashMap<i32, Vec<i32>>,
     long_read_molecule_list: HashMap<i32, Vec<i32>>,
     long_read_het_molecules: HashMap<i32, Vec<i32>>,
@@ -232,8 +232,8 @@ pub enum DataType {
 
 
 pub struct Assembly {
-    pub variants: HashMap<i32, (i32, usize, usize, usize)>, // map from kmer_id to crib molecule id and number seen, order and position
-    pub molecules: HashMap<i32, HashMap<i32, (usize, usize)>>, // map from crib molecule id to a map from kmer_id to order index
+    pub variants: HashMap<i32, (i32, usize, usize, usize)>, // map from kmer_id to assembly contig id, number seen, order and position
+    pub molecules: HashMap<i32, HashMap<i32, (usize, usize)>>, // map from assembly contig id to a map from kmer_id to order index
 }
 
 
@@ -344,6 +344,49 @@ pub struct Variants {
     het_linked_read_variants: HashMap<i32, HashSet<i32>>,
     het_long_read_variants: HashMap<i32, HashSet<i32>>,
     het_hic_variants: HashMap<i32, HashSet<i32>>,
+}
+
+pub struct HicMols {
+    mols: Vec<Vec<i32>>,
+}
+
+impl HicMols {
+    pub fn get_hic_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
+        Box::new(self.mols.iter())
+    }
+}
+
+pub fn load_hic(hic_mols: Vec<String>, kmers: &Kmers) -> HicMols {
+    let mut hic_molecules: Vec<Vec<i32>> = Vec::new();
+    let mut bufi32 = [0u8; 4];
+    for hic_file in hic_mols.iter() {
+        let f = File::open(hic_file.to_string())
+            .expect(&format!("Unable to open hic file {}", hic_file));
+        let mut reader = BufReader::new(f);
+        'outerhic: loop { // now deal with hic data, format is i32s until you hit a 0 if i get to 2 0's we are done
+            //break 'outerhic;
+            let mut vars: Vec<i32> = Vec::new();
+            let mut any = false;
+            loop {
+                if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
+                    if kmer_id == 0 { if !any { break 'outerhic; } else { break; } }
+                    match kmers.kmer_type.get(&kmer_id).unwrap() {
+                        KmerType::PairedHet => {
+                            vars.push(kmer_id); 
+                            any = true;
+                        },
+                        KmerType::UnpairedHet => any = true,
+                        KmerType::Homozygous => any = true,
+                    }
+                } else { break 'outerhic; }
+            }
+            if vars.len() > 1 {
+                hic_molecules.push(vars);
+            }
+        }
+    }
+    eprintln!("num hic molecules is {}", hic_molecules.len());
+    HicMols{ mols: hic_molecules, }
 }
 
 pub fn load_molecule_kmers(txg_mols: &Option<Vec<String>>, hic_mols: &Option<Vec<String>>, 
@@ -703,9 +746,9 @@ pub enum KmerType {
 }
 
 pub struct Kmers {
-    kmers: HashMap<i32, String>,
-    kmer_counts: HashMap<i32, i32>,
-    kmer_type: HashMap<i32, KmerType>,
+    kmers: HashMap<i32, String>, // map of kmer_id to string representation 
+    kmer_counts: HashMap<i32, i32>, // map of kmer_id to coverage 
+    kmer_type: HashMap<i32, KmerType>, // kmer_id to kmer type (paired het, unpaired het, hom)
 }
 
 impl Kmers {
@@ -714,7 +757,7 @@ impl Kmers {
             if v % 2 == 0 { v + 1 } 
             else { v - 1 } 
         }
-        else { 
+        else {
             if v % 2 == 0 { v - 1 } 
             else { v + 1 } 
         }
@@ -745,6 +788,8 @@ impl Kmers {
             if bytes4 == 0 { break; } 
 
             let switchme = std::str::from_utf8(&buf3).unwrap();
+
+                    
             match switchme {
                 "HET\t" => {
                     kmer_type.insert(kmer_id, KmerType::UnpairedHet);
