@@ -356,7 +356,7 @@ impl HicMols {
     }
 }
 
-pub fn load_hic(hic_mols: Vec<String>, kmers: &Kmers) -> HicMols {
+pub fn load_hic(hic_mols: &Vec<String>, kmers: &Kmers) -> HicMols {
     let mut hic_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
     for hic_file in hic_mols.iter() {
