@@ -356,34 +356,37 @@ impl HicMols {
     }
 }
 
-pub fn load_hic(hic_mols: &Vec<String>, kmers: &Kmers) -> HicMols {
+pub fn load_hic(hic_mols: &Option<Vec<String>>, kmers: &Kmers) -> HicMols {
     let mut hic_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
-    for hic_file in hic_mols.iter() {
-        let f = File::open(hic_file.to_string())
-            .expect(&format!("Unable to open hic file {}", hic_file));
-        let mut reader = BufReader::new(f);
-        'outerhic: loop { // now deal with hic data, format is i32s until you hit a 0 if i get to 2 0's we are done
-            //break 'outerhic;
-            let mut vars: Vec<i32> = Vec::new();
-            let mut any = false;
-            loop {
-                if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
-                    if kmer_id == 0 { if !any { break 'outerhic; } else { break; } }
-                    match kmers.kmer_type.get(&kmer_id).unwrap() {
-                        KmerType::PairedHet => {
-                            vars.push(kmer_id); 
-                            any = true;
-                        },
-                        KmerType::UnpairedHet => any = true,
-                        KmerType::Homozygous => any = true,
-                    }
-                } else { break 'outerhic; }
-            }
-            if vars.len() > 1 {
-                hic_molecules.push(vars);
+    if let Some(hic_mols) = hic_mols{
+        for hic_file in hic_mols.iter() {
+            let f = File::open(hic_file.to_string())
+                .expect(&format!("Unable to open hic file {}", hic_file));
+            let mut reader = BufReader::new(f);
+            'outerhic: loop { // now deal with hic data, format is i32s until you hit a 0 if i get to 2 0's we are done
+                //break 'outerhic;
+                let mut vars: Vec<i32> = Vec::new();
+                let mut any = false;
+                loop {
+                    if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
+                        if kmer_id == 0 { if !any { break 'outerhic; } else { break; } }
+                        match kmers.kmer_type.get(&kmer_id).unwrap() {
+                            KmerType::PairedHet => {
+                                vars.push(kmer_id); 
+                                any = true;
+                            },
+                            KmerType::UnpairedHet => any = true,
+                            KmerType::Homozygous => any = true,
+                        }
+                    } else { break 'outerhic; }
+                }
+                if vars.len() > 1 {
+                    hic_molecules.push(vars);
+                }
             }
         }
+
     }
     eprintln!("num hic molecules is {}", hic_molecules.len());
     HicMols{ mols: hic_molecules, }
