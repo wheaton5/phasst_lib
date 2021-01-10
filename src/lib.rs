@@ -289,9 +289,11 @@ pub fn load_assembly_kmers(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
                                 has = true;
                             } else {
                                 variants.insert(kmer_id.abs(), (mol_id, 1, order, position as usize));
+                                //variants.insert(Kmers::pair(kmer_id.abs()), (mol_id, 1, order, position as usize));
                             }
                             if has {
                                 variants.insert(kmer_id.abs(), (mol_id, number+1, order, position as usize));
+                                //variants.insert(Kmers::pair(kmer_id.abs()), (mol_id, number+1, order, position as usize));
                             }
                         },
                         Some(KmerType::UnpairedHet) => {
@@ -390,6 +392,53 @@ pub fn load_hic(hic_mols: &Option<Vec<String>>, kmers: &Kmers) -> HicMols {
     }
     eprintln!("num hic molecules is {}", hic_molecules.len());
     HicMols{ mols: hic_molecules, }
+}
+
+pub struct HifiMols {
+    mols: Vec<Vec<i32>>,
+}
+
+impl HifiMols {
+    pub fn get_hifi_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
+        Box::new(self.mols.iter())
+    }
+}
+
+
+pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
+    let mut hifi_molecules: Vec<Vec<i32>> = Vec::new();
+    let mut bufi32 = [0u8; 4];
+    if let Some(hifi_mols) = hifi_mols {
+        for hifi_file in hifi_mols.iter() {
+            let f = File::open(hifi_file.to_string())
+                .expect(&format!("Unable to open hifi file {}", hifi_file));
+            let mut reader = BufReader::new(f);
+            'outerhifi: loop { // now deal with hic data, format is i32s until you hit a 0 if i get to 2 0's we are done
+                //break 'outerhic;
+                let mut vars: Vec<i32> = Vec::new();
+                let mut any = false;
+                loop {
+                    if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
+                        if kmer_id == 0 { if !any { break 'outerhifi; } else { break; } }
+                        match kmers.kmer_type.get(&kmer_id).unwrap() {
+                            KmerType::PairedHet => {
+                                vars.push(kmer_id); 
+                                any = true;
+                            },
+                            KmerType::UnpairedHet => any = true,
+                            KmerType::Homozygous => any = true,
+                        }
+                    } else { break 'outerhifi; }
+                }
+                if vars.len() > 1 {
+                    hifi_molecules.push(vars);
+                }
+            }
+        }
+
+    }
+    eprintln!("num hifi molecules is {}", hifi_molecules.len());
+    HifiMols{ mols: hifi_molecules, }
 }
 
 pub fn load_molecule_kmers(txg_mols: &Option<Vec<String>>, hic_mols: &Option<Vec<String>>, 
