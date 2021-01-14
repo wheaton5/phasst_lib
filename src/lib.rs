@@ -827,6 +827,7 @@ impl Kmers {
         let mut reader = BufReader::new(reader);
         let mut buf1 = vec![]; let mut buf2 = vec![];
         let mut buf3 = vec![]; let mut buf4 = vec![];
+        let mut linenumber = 0;
         loop {
             buf1.clear(); buf2.clear(); buf3.clear(); buf4.clear();
 
@@ -841,6 +842,7 @@ impl Kmers {
 
             let bytes4 = reader.read_until(b'\n', &mut buf4).expect("cannot read file");
             if bytes4 == 0 { break; } 
+            linenumber += 1;
 
             let switchme = std::str::from_utf8(&buf3).unwrap();
 
@@ -856,7 +858,7 @@ impl Kmers {
                 "HOM\t" => {
                     kmer_type.insert(kmer_id, KmerType::Homozygous);
                     kmer_type.insert(-kmer_id, KmerType::Homozygous);
-                    if kmer_id == 929 { eprintln!("thought it was hom"); }
+                    if kmer_id == 929 { eprintln!("thought it was hom {} {}",switchme, linenumber); }
                 },
                 _ => {
                     if kmer_id == 929 { eprintln!("im going insane"); }
