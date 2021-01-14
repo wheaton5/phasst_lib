@@ -422,6 +422,7 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
                 loop {
                     if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
                         if kmer_id == 0 { if !any { break 'outerhifi; } else { break; } }
+                        if !kmers.kmer_type.contains_key(&kmer_id) { eprintln!("what? kmer id {}", kmer_id);  break 'outerhifi; }
                         match kmers.kmer_type.get(&kmer_id).unwrap() {
                             KmerType::PairedHet => {
                                 vars.push(kmer_id); 
