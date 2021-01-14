@@ -408,7 +408,9 @@ impl HifiMols {
 pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
     let mut hifi_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
+
     if let Some(hifi_mols) = hifi_mols {
+        eprintln!("loading hifi mols");
         for hifi_file in hifi_mols.iter() {
             let f = File::open(hifi_file.to_string())
                 .expect(&format!("Unable to open hifi file {}", hifi_file));
@@ -436,7 +438,7 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
             }
         }
 
-    }
+    } else { eprintln!("no hifi files"); }
     eprintln!("num hifi molecules is {}", hifi_molecules.len());
     HifiMols{ mols: hifi_molecules, }
 }
