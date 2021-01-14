@@ -851,12 +851,15 @@ impl Kmers {
                     kmer_type.insert(-kmer_id, KmerType::UnpairedHet);
                     kmers.insert(kmer_id, std::str::from_utf8(&buf1[0..(bytes1-1)]).unwrap().to_string());
                     //println!("")
+                    if kmer_id == 929 { eprintln!("thought it was unpaired het"); }
                 },
                 "HOM\t" => {
                     kmer_type.insert(kmer_id, KmerType::Homozygous);
                     kmer_type.insert(-kmer_id, KmerType::Homozygous);
+                    if kmer_id == 929 { eprintln!("thought it was hom"); }
                 },
                 _ => {
+                    if kmer_id == 929 { eprintln!("im going insane"); }
                     kmer_type.insert(kmer_id, KmerType::PairedHet);
                     kmer_type.insert(-kmer_id, KmerType::PairedHet);
                     kmer_type.insert(kmer_id+1, KmerType::PairedHet);
