@@ -408,6 +408,7 @@ impl HifiMols {
 pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
     let mut hifi_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
+    let mut buf2 = [0u8; 4];
 
     if let Some(hifi_mols) = hifi_mols {
         eprintln!("loading hifi mols");
@@ -422,6 +423,7 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
                 loop {
                     if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
                         if kmer_id == 0 { if !any { break 'outerhifi; } else { break; } }
+                        eat_i32(&mut reader, &mut buf2); // IGNORING POSITION OF KMER HERE
                         if !kmers.kmer_type.contains_key(&kmer_id) { eprintln!("what? kmer id {}", kmer_id);  break 'outerhifi; }
                         match kmers.kmer_type.get(&kmer_id).unwrap() {
                             KmerType::PairedHet => {
