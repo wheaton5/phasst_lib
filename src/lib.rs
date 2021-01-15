@@ -425,7 +425,7 @@ pub fn load_linked_read_barcodes(txg: &Option<Vec<String>>, kmers: &Kmers) -> Li
                             KmerType::Homozygous => (),
                         }
                     }
-                }
+                } else { break; }
             }
         }
         for (_bc, vars) in barcodes {
