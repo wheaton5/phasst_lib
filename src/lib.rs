@@ -409,7 +409,6 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
     let mut hifi_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
     let mut buf2 = [0u8; 4];
-    let mut count = 0;
 
     if let Some(hifi_mols) = hifi_mols {
         eprintln!("loading hifi mols");
@@ -420,32 +419,24 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
             'outerhifi: loop { // now deal with hic data, format is i32s until you hit a 0 if i get to 2 0's we are done
                 //break 'outerhic;
                 let mut vars: Vec<i32> = Vec::new();
-                let mut any = false;
                 
                 loop {
                     if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
-                        if kmer_id == 0 { 
-                            if !any { 
-                                eprintln!("hit 0 and didnt have any kmers, breaking, {}", count); 
-                                break 'outerhifi; 
-                                } else { break; } 
-                        }
+                        if kmer_id == 0 { break }
+                            
                         eat_i32(&mut reader, &mut buf2); // IGNORING POSITION OF KMER HERE
-                        if !kmers.kmer_type.contains_key(&kmer_id) { eprintln!("what? kmer id {}", kmer_id);  break 'outerhifi; }
+                        //if !kmers.kmer_type.contains_key(&kmer_id) {  break 'outerhifi; }
                         match kmers.kmer_type.get(&kmer_id).unwrap() {
                             KmerType::PairedHet => {
                                 vars.push(kmer_id); 
-                                any = true;
                             },
-                            KmerType::UnpairedHet => any = true,
-                            KmerType::Homozygous => any = true,
+                            KmerType::UnpairedHet => (),
+                            KmerType::Homozygous => (),
                         }
                     } else { 
-                        eprintln!("got to end of file, breaking, {}", count);
                         break 'outerhifi; 
                     }
                 }
-                count += 1;
                 if vars.len() > 1 {
                     hifi_molecules.push(vars);
                 }
