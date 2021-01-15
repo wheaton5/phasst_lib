@@ -409,6 +409,7 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
     let mut hifi_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
     let mut buf2 = [0u8; 4];
+    let mut count = 0;
 
     if let Some(hifi_mols) = hifi_mols {
         eprintln!("loading hifi mols");
@@ -420,9 +421,15 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
                 //break 'outerhic;
                 let mut vars: Vec<i32> = Vec::new();
                 let mut any = false;
+                
                 loop {
                     if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
-                        if kmer_id == 0 { if !any { break 'outerhifi; } else { break; } }
+                        if kmer_id == 0 { 
+                            if !any { 
+                                eprintln!("hit 0 and didnt have any kmers, breaking, {}", count); 
+                                break 'outerhifi; 
+                                } else { break; } 
+                        }
                         eat_i32(&mut reader, &mut buf2); // IGNORING POSITION OF KMER HERE
                         if !kmers.kmer_type.contains_key(&kmer_id) { eprintln!("what? kmer id {}", kmer_id);  break 'outerhifi; }
                         match kmers.kmer_type.get(&kmer_id).unwrap() {
@@ -433,8 +440,12 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
                             KmerType::UnpairedHet => any = true,
                             KmerType::Homozygous => any = true,
                         }
-                    } else { break 'outerhifi; }
+                    } else { 
+                        eprintln!("got to end of file, breaking, {}", count);
+                        break 'outerhifi; 
+                    }
                 }
+                count += 1;
                 if vars.len() > 1 {
                     hifi_molecules.push(vars);
                 }
