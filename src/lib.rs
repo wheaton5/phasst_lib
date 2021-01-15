@@ -416,8 +416,14 @@ pub fn load_linked_read_barcodes(txg: &Option<Vec<String>>, kmers: &Kmers) -> Li
             loop {
                 if let Some(barcode_id) = eat_i32(&mut reader, &mut bufi32) {
                     if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
-                        let bc = barcodes.entry(barcode_id).or_insert(Vec::new());
-                        bc.push(kmer_id);
+                        match kmers.kmer_type.get(&kmer_id).unwrap() {
+                            KmerType::PairedHet => {
+                                let bc = barcodes.entry(barcode_id).or_insert(Vec::new());
+                                bc.push(kmer_id);
+                            },
+                            KmerType::UnpairedHet => (),
+                            KmerType::Homozygous => (),
+                        }
                     }
                 }
             }
