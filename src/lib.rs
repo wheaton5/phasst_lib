@@ -394,6 +394,41 @@ pub fn load_hic(hic_mols: &Option<Vec<String>>, kmers: &Kmers) -> HicMols {
     HicMols{ mols: hic_molecules, }
 }
 
+pub struct LinkedReadBarcodes {
+    barcodes: Vec<Vec<i32>>,
+}
+
+impl LinkedReadBarcodes {
+    pub fn get_linked_read_barcodes<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
+        Box::new(self.barcodes.iter())
+    }
+}
+
+pub fn load_linked_read_barcodes(txg: &Option<Vec<String>>, kmers: &Kmers) -> LinkedReadBarcodes {
+    let mut to_return: LinkedReadBarcodes = LinkedReadBarcodes { barcodes: Vec::new() };
+    let mut barcodes: HashMap<i32, Vec<i32>> = HashMap::new();
+    let mut bufi32 = [0u8; 4];
+    if let Some(txg_files) = txg {
+        for txg_file in txg_files.iter() {
+            let f = File::open(txg_file.to_string())
+                .expect(&format!("Unable to open txg file {}", txg_file));
+            let mut reader = BufReader::new(f);
+            loop {
+                if let Some(barcode_id) = eat_i32(&mut reader, &mut bufi32) {
+                    if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
+                        let bc = barcodes.entry(barcode_id).or_insert(Vec::new());
+                        bc.push(kmer_id);
+                    }
+                }
+            }
+        }
+        for (_bc, vars) in barcodes {
+            to_return.barcodes.push(vars);
+        }
+    }
+    to_return
+}
+
 pub struct HifiMols {
     mols: Vec<Vec<i32>>,
 }
