@@ -416,8 +416,7 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
             let f = File::open(hifi_file.to_string())
                 .expect(&format!("Unable to open hifi file {}", hifi_file));
             let mut reader = BufReader::new(f);
-            'outerhifi: loop { // now deal with hic data, format is i32s until you hit a 0 if i get to 2 0's we are done
-                //break 'outerhic;
+            'outerhifi: loop { // now deal with hifi data, format is i32, i32 until you hit a 0 for each read
                 let mut vars: Vec<i32> = Vec::new();
                 
                 loop {
@@ -425,7 +424,6 @@ pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
                         if kmer_id == 0 { break }
                             
                         eat_i32(&mut reader, &mut buf2); // IGNORING POSITION OF KMER HERE
-                        //if !kmers.kmer_type.contains_key(&kmer_id) {  break 'outerhifi; }
                         match kmers.kmer_type.get(&kmer_id).unwrap() {
                             KmerType::PairedHet => {
                                 vars.push(kmer_id); 
