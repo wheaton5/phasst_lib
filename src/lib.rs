@@ -234,10 +234,11 @@ pub enum DataType {
 pub struct Assembly {
     pub variants: HashMap<i32, (i32, usize, usize, usize)>, // map from kmer_id to assembly contig id, number seen, order and position
     pub molecules: HashMap<i32, HashMap<i32, (usize, usize)>>, // map from assembly contig id to a map from kmer_id to order index
+    pub contig_names: Vec<String>,
 }
 
 
-pub fn load_assembly_kmers(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
+pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kmers: &Kmers) -> Assembly {
     let mut mol_id = 1;
     let mut variants: HashMap<i32, (i32, usize, usize, usize)> = HashMap::new();
     let mut molecules: HashMap<i32, HashMap<i32, (usize, usize)>> = HashMap::new();
@@ -327,9 +328,22 @@ pub fn load_assembly_kmers(assembly_kmers: &String, kmers: &Kmers) -> Assembly {
         
     }
 
+    let reader = get_reader(assembly_fasta.to_string());
+    let mut contig_names: Vec<String> = Vec::new();
+    contig_names.push("no_contig_0".to_string());
+    for line in reader.lines() {
+        let line = line.expect("Unable to read line");
+        if line.starts_with(">") {
+            let vec: Vec<&str> = line.split_whitespace().collect();
+            let name = vec[0][1..].to_string();
+            contig_names.push(name);
+        }
+    }
+
     Assembly {
         variants: variants,
         molecules: molecules,
+        contig_names: contig_names,
     }
 }
 
