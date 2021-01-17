@@ -869,9 +869,9 @@ pub enum KmerType {
 }
 
 pub struct Kmers {
-    kmers: HashMap<i32, String>, // map of kmer_id to string representation 
-    kmer_counts: HashMap<i32, i32>, // map of kmer_id to coverage 
-    kmer_type: HashMap<i32, KmerType>, // kmer_id to kmer type (paired het, unpaired het, hom)
+    pub kmers: HashMap<i32, String>, // map of kmer_id to string representation 
+    pub kmer_counts: HashMap<i32, i32>, // map of kmer_id to coverage 
+    pub kmer_type: HashMap<i32, KmerType>, // kmer_id to kmer type (paired het, unpaired het, hom)
 }
 
 impl Kmers {
