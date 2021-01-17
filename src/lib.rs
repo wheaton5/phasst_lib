@@ -1,6 +1,7 @@
 extern crate hashbrown;
 extern crate flate2;
 extern crate byteorder;
+extern crate bio;
 use flate2::read::GzDecoder;
 use std::io::BufReader;
 use std::io::BufRead;
@@ -12,6 +13,8 @@ use byteorder::{ByteOrder, LittleEndian};
 
 use hashbrown::{HashMap, HashSet};
 use std::str;
+use bio::io::fasta;
+use std::path::Path;
 
 
 
@@ -328,9 +331,16 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
         
     }
 
-    let reader = get_reader(assembly_fasta.to_string());
+    //let fasta = fasta::Reader::new(assembly_fasta);
+    let reader =  fasta::Reader::from_file(Path::new(assembly_fasta)).expect("fasta not found");
     let mut contig_names: Vec<String> = Vec::new();
     contig_names.push("no_contig_0".to_string());
+    for record in reader.records() {
+        let record = record.unwrap();
+        contig_names.push(record.id().to_string());
+    }
+    //let reader = get_reader(assembly_fasta.to_string());
+    /*
     for line in reader.lines() {
         let line = line.expect("Unable to read line");
         if line.starts_with(">") {
@@ -339,6 +349,7 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
             contig_names.push(name);
         }
     }
+    */
 
     Assembly {
         variants: variants,
