@@ -870,6 +870,7 @@ pub enum KmerType {
 
 pub struct Kmers {
     pub kmers: HashMap<i32, String>, // map of kmer_id to string representation 
+    pub kmer_ids: HashMap<String, i32>, // map from kmer string to id
     pub kmer_counts: HashMap<i32, i32>, // map of kmer_id to coverage 
     pub kmer_type: HashMap<i32, KmerType>, // kmer_id to kmer type (paired het, unpaired het, hom)
 }
@@ -888,6 +889,7 @@ impl Kmers {
 
     pub fn load_kmers(kmerfile: &String) -> Kmers {
         let mut kmers: HashMap<i32, String> = HashMap::new();
+        let mut kmer_ids: HashMap<String, i32> = HashMap::new();
         let mut kmer_id: i32 = 1; // no 0 kmer id as we are using sign for which of the pair
         let mut kmer_type: HashMap<i32, KmerType> = HashMap::new();
         let mut kmer_counts: HashMap<i32, i32> = HashMap::new();
@@ -919,28 +921,34 @@ impl Kmers {
                 "HET\t" => {
                     kmer_type.insert(kmer_id, KmerType::UnpairedHet);
                     kmer_type.insert(-kmer_id, KmerType::UnpairedHet);
-                    kmers.insert(kmer_id, std::str::from_utf8(&buf1[0..(bytes1-1)]).unwrap().to_string());
-                    //println!("")
-                    if kmer_id == 929 { eprintln!("thought it was unpaired het"); }
+                    let kmer = std::str::from_utf8(&buf1[0..(bytes1-1)]).unwrap().to_string();
+                    kmers.insert(kmer_id, kmer.to_string());
+                    kmer_ids.insert(kmer, kmer_id);
+
                 },
                 "HOM\t" => {
                     kmer_type.insert(kmer_id, KmerType::Homozygous);
                     kmer_type.insert(-kmer_id, KmerType::Homozygous);
-                    if kmer_id == 929 { eprintln!("thought it was hom {} {}",switchme, linenumber); }
+                    let kmer = std::str::from_utf8(&buf1[0..(bytes1-1)]).unwrap().to_string();
+                    kmers.insert(kmer_id, kmer.to_string());
+                    kmer_ids.insert(kmer, kmer_id);
                 },
                 _ => {
-                    if kmer_id == 929 { eprintln!("im going insane"); }
                     kmer_type.insert(kmer_id, KmerType::PairedHet);
                     kmer_type.insert(-kmer_id, KmerType::PairedHet);
                     kmer_type.insert(kmer_id+1, KmerType::PairedHet);
                     kmer_type.insert(-(kmer_id+1), KmerType::PairedHet);
-                    kmers.insert(kmer_id, std::str::from_utf8(&buf1[0..(bytes1-1)]).unwrap().to_string());
-                    kmers.insert(-kmer_id, std::str::from_utf8(&buf1[0..(bytes1-1)]).unwrap().to_string());
+                    let kmer1 = std::str::from_utf8(&buf1[0..(bytes1-1)]).unwrap().to_string();
+                    let kmer2 = std::str::from_utf8(&buf3[0..(bytes3-1)]).unwrap().to_string();
+                    kmers.insert(kmer_id, kmer1.to_string());
+                    kmers.insert(-kmer_id, kmer1.to_string());
+                    kmer_ids.insert(kmer1, kmer_id);
                     let count = std::str::from_utf8(&buf2[0..(bytes2-1)]).unwrap().to_string().parse::<i32>().unwrap();
                     kmer_counts.insert(kmer_id, count);
                     kmer_counts.insert(-kmer_id, count);
-                    kmers.insert(kmer_id+1, std::str::from_utf8(&buf3[0..(bytes3-1)]).unwrap().to_string());
-                    kmers.insert(-(kmer_id+1), std::str::from_utf8(&buf3[0..(bytes3-1)]).unwrap().to_string());
+                    kmers.insert(kmer_id+1, kmer2.to_string());
+                    kmers.insert(-(kmer_id+1), kmer2.to_string());
+                    kmer_ids.insert(kmer2, kmer_id+1);
                     let count = std::str::from_utf8(&buf4[0..(bytes4-1)]).unwrap().to_string().parse::<i32>().unwrap();
                     kmer_counts.insert(kmer_id+1, count);
                     kmer_counts.insert(-(kmer_id+1), count);
@@ -953,6 +961,7 @@ impl Kmers {
             kmers: kmers,
             kmer_counts: kmer_counts,
             kmer_type: kmer_type,
+            kmer_ids: kmer_ids,
         }
     }
 }
