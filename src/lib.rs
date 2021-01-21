@@ -957,7 +957,7 @@ impl Kmers {
     }
 }
 
-fn get_reader(filename: String) -> BufReader<Box<dyn Read>> {
+pub fn get_reader(filename: String) -> BufReader<Box<dyn Read>> {
     let filetype: Vec<&str> = filename.split(".").collect();
     let filetype = filetype[filetype.len()-1];
     let file = match File::open(filename.clone()) {
