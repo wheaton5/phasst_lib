@@ -238,6 +238,7 @@ pub struct Assembly {
     pub variants: HashMap<i32, (i32, usize, usize, usize)>, // map from kmer_id to assembly contig id, number seen, order and position
     pub molecules: HashMap<i32, HashMap<i32, (usize, usize)>>, // map from assembly contig id to a map from kmer_id to order index
     pub contig_names: Vec<String>,
+    pub contig_ids: HashMap<String, i32>,
 }
 
 
@@ -245,6 +246,7 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
     let mut mol_id = 1;
     let mut variants: HashMap<i32, (i32, usize, usize, usize)> = HashMap::new();
     let mut molecules: HashMap<i32, HashMap<i32, (usize, usize)>> = HashMap::new();
+    let mut contig_ids: HashMap<String, i32> = HashMap::new();
 
     let mut paired_het_variants: HashSet<i32> = HashSet::new();
     let mut long_read_variants: HashMap<i32, HashSet<i32>> = HashMap::new();
@@ -335,9 +337,10 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
     let reader =  fasta::Reader::from_file(Path::new(assembly_fasta)).expect("fasta not found");
     let mut contig_names: Vec<String> = Vec::new();
     contig_names.push("no_contig_0".to_string());
-    for record in reader.records() {
+    for (index, record) in reader.records().enumerate() {
         let record = record.unwrap();
         contig_names.push(record.id().to_string());
+        contig_ids.insert(record.id().to_string(), (index + 1) as i32);
     }
     //let reader = get_reader(assembly_fasta.to_string());
     /*
@@ -355,6 +358,7 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
         variants: variants,
         molecules: molecules,
         contig_names: contig_names,
+        contig_ids: contig_ids,
     }
 }
 
