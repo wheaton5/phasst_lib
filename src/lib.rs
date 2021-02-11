@@ -268,7 +268,6 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
         let mut hom_kmers: HashSet<i32> = HashSet::new();
         //let mut het_kmers: HashSet<i32> = HashSet::new();
         let mut order = 0;
-        eprintln!("mol_id {}", mol_id);
         loop {
             if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
                 if kmer_id == 0 { break; }
@@ -281,7 +280,6 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
                     let mut has = false;
                    
 
-                    eprintln!("why is my life hard {}", mol_id);
                     let var_order = molecules.entry(mol_id).or_insert(HashMap::new());
                     var_order.insert(kmer_id.abs(), (order, position as usize));
                     match kmers.kmer_type.get(&kmer_id) {
