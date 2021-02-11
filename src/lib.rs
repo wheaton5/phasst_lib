@@ -391,7 +391,7 @@ impl HicMols {
     }
 }
 
-pub fn load_hic(hic_mols: &Option<Vec<String>>, kmers: &Kmers) -> HicMols {
+pub fn load_hic(hic_mols: Option<&Vec<String>>, kmers: &Kmers) -> HicMols {
     let mut hic_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
     if let Some(hic_mols) = hic_mols{
