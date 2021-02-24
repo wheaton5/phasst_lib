@@ -436,7 +436,7 @@ impl LinkedReadBarcodes {
     }
 }
 
-pub fn load_linked_read_barcodes(txg: &Option<Vec<String>>, kmers: &Kmers) -> LinkedReadBarcodes {
+pub fn load_linked_read_barcodes(txg: Option<&Vec<String>>, kmers: &Kmers) -> LinkedReadBarcodes {
     let mut to_return: LinkedReadBarcodes = LinkedReadBarcodes { barcodes: Vec::new() };
     let mut barcodes: HashMap<i32, Vec<i32>> = HashMap::new();
     let mut bufi32 = [0u8; 4];
@@ -478,7 +478,7 @@ impl HifiMols {
 }
 
 
-pub fn load_hifi(hifi_mols: &Option<Vec<String>>, kmers: &Kmers) -> HifiMols {
+pub fn load_hifi(hifi_mols: Option<&Vec<String>>, kmers: &Kmers) -> HifiMols {
     let mut hifi_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
     let mut buf2 = [0u8; 4];
