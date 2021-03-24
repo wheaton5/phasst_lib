@@ -334,7 +334,6 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
         
     }
 
-    //let fasta = fasta::Reader::new(assembly_fasta);
     let reader =  fasta::Reader::from_file(Path::new(assembly_fasta)).expect("fasta not found");
     let mut contig_names: Vec<String> = Vec::new();
     contig_names.push("no_contig_0".to_string());
@@ -344,17 +343,7 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
         contig_ids.insert(record.id().to_string(), (index + 1) as i32);
         contig_sizes.insert(index as i32 + 1, record.seq().len());
     }
-    //let reader = get_reader(assembly_fasta.to_string());
-    /*
-    for line in reader.lines() {
-        let line = line.expect("Unable to read line");
-        if line.starts_with(">") {
-            let vec: Vec<&str> = line.split_whitespace().collect();
-            let name = vec[0][1..].to_string();
-            contig_names.push(name);
-        }
-    }
-    */
+  
 
     Assembly {
         variants: variants,
@@ -390,7 +379,7 @@ impl HicMols {
     }
 }
 
-pub fn load_hic(hic_mols: Option<&Vec<String>>, kmers: &Kmers) -> HicMols {
+pub fn load_hic(hic_mols: Option<&Vec<String>>, kmers: &Kmers, all: bool) -> HicMols {
     let mut hic_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
     if let Some(hic_mols) = hic_mols{
@@ -411,7 +400,12 @@ pub fn load_hic(hic_mols: Option<&Vec<String>>, kmers: &Kmers) -> HicMols {
                                 any = true;
                             },
                             KmerType::UnpairedHet => any = true,
-                            KmerType::Homozygous => any = true,
+                            KmerType::Homozygous => {
+                                any = true;
+                                if all {
+                                    vars.push(kmer_id);
+                                }
+                            },
                         }
                     } else { break 'outerhic; }
                 }
