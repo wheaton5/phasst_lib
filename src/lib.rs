@@ -334,7 +334,7 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
         
     }
 
-    let reader =  fasta::Reader::from_file(Path::new(assembly_fasta)).expect("fasta not found");
+    let reader =  fasta::Reader::from_file(Path::new(assembly_fasta)).expect(&format!("fasta not found {}", assembly_fasta));
     let mut contig_names: Vec<String> = Vec::new();
     contig_names.push("no_contig_0".to_string());
     for (index, record) in reader.records().enumerate() {
@@ -381,6 +381,7 @@ impl HicMols {
 
 pub fn load_hic(hic_mols: Option<&Vec<String>>, kmers: &Kmers, all: bool) -> HicMols {
     let mut hic_molecules: Vec<Vec<i32>> = Vec::new();
+    
     let mut bufi32 = [0u8; 4];
     if let Some(hic_mols) = hic_mols{
         for hic_file in hic_mols.iter() {
