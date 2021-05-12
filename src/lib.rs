@@ -369,17 +369,32 @@ pub struct Variants {
     het_hic_variants: HashMap<i32, HashSet<i32>>,
 }
 
-pub struct HicMols {
+pub struct Mols {
     mols: Vec<Vec<i32>>,
 }
 
-impl HicMols {
-    pub fn get_hic_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
+pub struct KmerMols {
+    kmer_mols: HashMap<i32, Vec<usize>>, // if i ask xxxAxxx do I also get xxxTxxx
+}
+
+impl Mols {
+    pub fn get_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
         Box::new(self.mols.iter())
+    }
+    pub fn get_canonical_kmer_mols(&self) -> KmerMols {
+        let mut kmer_mols: HashMap<i32, Vec<usize>> = HashMap::new();
+        for (moldex, mol) in self.mols.iter().enumerate() {
+            for kmer in mol.iter() {
+                let key = Kmers::canonical_pair(*kmer);
+                let mols = kmer_mols.entry(key).or_insert(Vec::new());
+                mols.push(moldex); // used to have data structure where moldex was 1 based and -moldex encoded that you had the alt allele
+            }
+        }
+        KmerMols { kmer_mols: kmer_mols }
     }
 }
 
-pub fn load_hic(hic_mols: Option<&Vec<String>>, kmers: &Kmers, all: bool) -> HicMols {
+pub fn load_hic(hic_mols: Option<&Vec<String>>, kmers: &Kmers, all: bool) -> Mols {
     let mut hic_molecules: Vec<Vec<i32>> = Vec::new();
     
     let mut bufi32 = [0u8; 4];
@@ -418,21 +433,21 @@ pub fn load_hic(hic_mols: Option<&Vec<String>>, kmers: &Kmers, all: bool) -> Hic
 
     }
     eprintln!("num hic molecules is {}", hic_molecules.len());
-    HicMols{ mols: hic_molecules, }
+    Mols{ mols: hic_molecules, }
 }
 
-pub struct LinkedReadBarcodes {
-    barcodes: Vec<Vec<i32>>,
-}
+//pub struct LinkedReadBarcodes {
+ //   barcodes: Vec<Vec<i32>>,
+//}
 
-impl LinkedReadBarcodes {
-    pub fn get_linked_read_barcodes<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
-        Box::new(self.barcodes.iter())
-    }
-}
+//impl LinkedReadBarcodes {
+//    pub fn get_linked_read_barcodes<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
+//        Box::new(self.barcodes.iter())
+//    }
+//}
 
-pub fn load_linked_read_barcodes(txg: Option<&Vec<String>>, kmers: &Kmers) -> LinkedReadBarcodes {
-    let mut to_return: LinkedReadBarcodes = LinkedReadBarcodes { barcodes: Vec::new() };
+pub fn load_linked_read_barcodes(txg: Option<&Vec<String>>, kmers: &Kmers) -> Mols {
+    let mut to_return: Mols = Mols { mols: Vec::new() };
     let mut barcodes: HashMap<i32, Vec<i32>> = HashMap::new();
     let mut bufi32 = [0u8; 4];
     if let Some(txg_files) = txg {
@@ -456,24 +471,24 @@ pub fn load_linked_read_barcodes(txg: Option<&Vec<String>>, kmers: &Kmers) -> Li
             }
         }
         for (_bc, vars) in barcodes {
-            to_return.barcodes.push(vars);
+            to_return.mols.push(vars);
         }
     }
     to_return
 }
 
-pub struct HifiMols {
-    mols: Vec<Vec<i32>>,
-}
+//pub struct HifiMols {
+//    mols: Vec<Vec<i32>>,
+//}
 
-impl HifiMols {
-    pub fn get_hifi_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
-        Box::new(self.mols.iter())
-    }
-}
+//impl HifiMols {
+//    pub fn get_hifi_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
+ //       Box::new(self.mols.iter())
+//    }
+//}
 
 
-pub fn load_hifi(hifi_mols: Option<&Vec<String>>, kmers: &Kmers) -> HifiMols {
+pub fn load_hifi(hifi_mols: Option<&Vec<String>>, kmers: &Kmers) -> Mols {
     let mut hifi_molecules: Vec<Vec<i32>> = Vec::new();
     let mut bufi32 = [0u8; 4];
     let mut buf2 = [0u8; 4];
@@ -511,7 +526,7 @@ pub fn load_hifi(hifi_mols: Option<&Vec<String>>, kmers: &Kmers) -> HifiMols {
 
     } else { eprintln!("no hifi files"); }
     eprintln!("num hifi molecules is {}", hifi_molecules.len());
-    HifiMols{ mols: hifi_molecules, }
+    Mols{ mols: hifi_molecules, }
 }
 
 pub fn load_molecule_kmers(txg_mols: &Option<Vec<String>>, hic_mols: &Option<Vec<String>>, 
@@ -888,6 +903,10 @@ impl Kmers {
             else { v + 1 } 
         }
     }
+
+    pub fn canonical_pair(v: i32) -> i32 {
+        v.abs().min(Kmers::pair(v.abs()))
+    } // -xxxAxxx or xxxAxxx or -xxxTxxx or xxxTxxx you always get back xxxAxxx
 
     pub fn load_kmers(kmerfile: &String) -> Kmers {
         let mut kmers: HashMap<i32, String> = HashMap::new();
