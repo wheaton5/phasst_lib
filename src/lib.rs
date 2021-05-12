@@ -237,6 +237,7 @@ pub enum DataType {
 pub struct Assembly {
     pub variants: HashMap<i32, (i32, usize, usize, usize)>, // map from kmer_id to assembly contig id, number seen, order and position
     pub molecules: HashMap<i32, HashMap<i32, (usize, usize)>>, // map from assembly contig id to a map from kmer_id to order index
+    pub contig_kmers: HashMap<i32, Vec<(usize, i32)>>, // map of contig ids to vec of (position, kmer_id), downside of using Vec is that contig Ids should be 1 indexed
     pub contig_names: Vec<String>,
     pub contig_ids: HashMap<String, i32>,
     pub contig_sizes: HashMap<i32, usize>,
@@ -249,6 +250,7 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
     let mut molecules: HashMap<i32, HashMap<i32, (usize, usize)>> = HashMap::new();
     let mut contig_ids: HashMap<String, i32> = HashMap::new();
     let mut contig_sizes: HashMap<i32, usize> = HashMap::new();
+    let mut contig_kmers: HashMap<i32, Vec<(usize, i32)>> = HashMap::new();
 
     let mut paired_het_variants: HashSet<i32> = HashSet::new();
     let mut long_read_variants: HashMap<i32, HashSet<i32>> = HashMap::new();
@@ -281,9 +283,13 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
                    
 
                     let var_order = molecules.entry(mol_id).or_insert(HashMap::new());
+                    let kmer_positions = contig_kmers.entry(mol_id).or_insert(Vec::new());
                     var_order.insert(kmer_id.abs(), (order, position as usize));
+                    
                     match kmers.kmer_type.get(&kmer_id) {
                         Some(KmerType::PairedHet) => {
+
+                            kmer_positions.push((position as usize, kmer_id));
                             ordered_kmers.push((mol_id, kmer_id.abs(), position as usize));
                             //eprintln!("paired het");
                             vars.insert(kmer_id);
@@ -350,6 +356,7 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
         molecules: molecules,
         contig_names: contig_names,
         contig_ids: contig_ids,
+        contig_kmers: contig_kmers,
         contig_sizes: contig_sizes,
     }
 }
