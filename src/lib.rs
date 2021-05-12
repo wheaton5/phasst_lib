@@ -16,6 +16,8 @@ use std::str;
 use bio::io::fasta;
 use std::path::Path;
 
+use std::iter;
+
 
 
 
@@ -382,6 +384,14 @@ pub struct Mols {
 
 pub struct KmerMols {
     kmer_mols: HashMap<i32, Vec<usize>>, // if i ask xxxAxxx do I also get xxxTxxx
+    empty: Vec<usize>,
+}
+
+impl KmerMols {
+    pub fn get_mols<'a>(&'a self, kmer: i32) -> Box<dyn Iterator<Item=&usize>+'a> {
+        //let something = self.kmer_mols.get(&Kmers::canonical_pair(kmer)).unwrap_or(&Vec::new()).iter();
+        Box::new(self.kmer_mols.get(&Kmers::canonical_pair(kmer)).unwrap_or(&self.empty).iter())
+    } 
 }
 
 impl Mols {
@@ -397,7 +407,7 @@ impl Mols {
                 mols.push(moldex); // used to have data structure where moldex was 1 based and -moldex encoded that you had the alt allele
             }
         }
-        KmerMols { kmer_mols: kmer_mols }
+        KmerMols { kmer_mols: kmer_mols, empty: Vec::new() }
     }
 }
 
