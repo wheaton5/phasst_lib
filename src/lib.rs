@@ -274,6 +274,8 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
         let mut order = 0;
         loop {
             if let Some(kmer_id) = eat_i32(&mut reader, &mut bufi32) {
+                let var_order = molecules.entry(mol_id).or_insert(HashMap::new());
+                let kmer_positions = contig_kmers.entry(mol_id).or_insert(Vec::new());
                 if kmer_id == 0 { break; }
                 if let Some(position) = eat_i32(&mut reader, &mut buf2){
                     let position = position + 10;
@@ -284,8 +286,7 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
                     let mut has = false;
                    
 
-                    let var_order = molecules.entry(mol_id).or_insert(HashMap::new());
-                    let kmer_positions = contig_kmers.entry(mol_id).or_insert(Vec::new());
+                    
                     var_order.insert(kmer_id.abs(), (order, position as usize));
                     
                     match kmers.kmer_type.get(&kmer_id) {
