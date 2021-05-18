@@ -384,14 +384,14 @@ pub struct Mols {
 }
 
 pub struct KmerMols {
-    kmer_mols: HashMap<i32, Vec<usize>>, // if i ask xxxAxxx do I also get moldexes that contain xxxTxxx? yes get_mols handles this by converting to canonical pair
+    kmer_mols: HashMap<i32, Vec<usize>>, // have to ask for kmer and its pair separately
     empty: Vec<usize>,
 }
 
 impl KmerMols {
     pub fn get_mols<'a>(&'a self, kmer: i32) -> Box<dyn Iterator<Item=&usize>+'a> {
         //let something = self.kmer_mols.get(&Kmers::canonical_pair(kmer)).unwrap_or(&Vec::new()).iter();
-        Box::new(self.kmer_mols.get(&Kmers::canonical_pair(kmer)).unwrap_or(&self.empty).iter())
+        Box::new(self.kmer_mols.get(&kmer).unwrap_or(&self.empty).iter())
     } 
 }
 
@@ -401,6 +401,17 @@ impl Mols {
     }
     pub fn get_molecule_kmers<'a>(&'a self, index: usize) -> Box<dyn Iterator<Item=&i32>+'a> {
         Box::new(self.mols[index].iter())
+    }
+    pub fn get_kmer_mols(&self) -> KmerMols {
+        let mut kmer_mols: HashMap<i32, Vec<usize>> = HashMap::new();
+        for (moldex, mol) in self.mols.iter().enumerate() {
+            for kmer in mol.iter() {
+                let key = kmer.abs();
+                let mols = kmer_mols.entry(key).or_insert(Vec::new());
+                mols.push(moldex); // used to have data structure where moldex was 1 based and -moldex encoded that you had the alt allele
+            }
+        }
+        KmerMols { kmer_mols: kmer_mols, empty: Vec::new() }
     }
     pub fn get_canonical_kmer_mols(&self) -> KmerMols {
         let mut kmer_mols: HashMap<i32, Vec<usize>> = HashMap::new();
