@@ -384,7 +384,7 @@ pub struct Mols {
 }
 
 pub struct KmerMols {
-    kmer_mols: HashMap<i32, Vec<usize>>, // if i ask xxxAxxx do I also get xxxTxxx
+    kmer_mols: HashMap<i32, Vec<usize>>, // if i ask xxxAxxx do I also get moldexes that contain xxxTxxx? yes get_mols handles this by converting to canonical pair
     empty: Vec<usize>,
 }
 
@@ -398,6 +398,9 @@ impl KmerMols {
 impl Mols {
     pub fn get_molecules<'a>(&'a self) -> Box<dyn Iterator<Item=&Vec<i32>>+'a> {
         Box::new(self.mols.iter())
+    }
+    pub fn get_molecule_kmers<'a>(&'a self, index: usize) -> Box<dyn Iterator<Item=&i32>+'a> {
+        Box::new(self.mols[index].iter())
     }
     pub fn get_canonical_kmer_mols(&self) -> KmerMols {
         let mut kmer_mols: HashMap<i32, Vec<usize>> = HashMap::new();
