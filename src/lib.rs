@@ -452,6 +452,7 @@ pub fn load_hic(hic_mols: Option<&Vec<String>>, kmers: &Kmers, all: bool) -> Mol
                                 any = true;
                                 if all {
                                     vars.push(kmer_id);
+                                    eprintln!("we are getting here");
                                 }
                             },
                         }
