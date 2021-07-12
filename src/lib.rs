@@ -288,7 +288,19 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
 
                     
                     var_order.insert(kmer_id.abs(), (order, position as usize));
-                    
+                    if let Some((mol, num, order, pos)) = variants.get(&kmer_id.abs()) {
+                        molecule = *mol;
+                        number = *num;
+                        position1 = *pos;
+                        has = true;
+                    } else {
+                        variants.insert(kmer_id.abs(), (mol_id, 1, order, position as usize));
+                        //variants.insert(Kmers::pair(kmer_id.abs()), (mol_id, 1, order, position as usize));
+                    }
+                    if has {
+                        variants.insert(kmer_id.abs(), (mol_id, number+1, order, position as usize));
+                        //variants.insert(Kmers::pair(kmer_id.abs()), (mol_id, number+1, order, position as usize));
+                    }
                     match kmers.kmer_type.get(&kmer_id) {
                         Some(KmerType::PairedHet) => {
 
@@ -298,25 +310,14 @@ pub fn load_assembly_kmers(assembly_kmers: &String, assembly_fasta: &String, kme
                             vars.insert(kmer_id);
                             paired_het_variants.insert(kmer_id.abs());
                             varlist.push(kmer_id);
-                            if let Some((mol, num, order, pos)) = variants.get(&kmer_id.abs()) {
-                                molecule = *mol;
-                                number = *num;
-                                position1 = *pos;
-                                has = true;
-                            } else {
-                                variants.insert(kmer_id.abs(), (mol_id, 1, order, position as usize));
-                                //variants.insert(Kmers::pair(kmer_id.abs()), (mol_id, 1, order, position as usize));
-                            }
-                            if has {
-                                variants.insert(kmer_id.abs(), (mol_id, number+1, order, position as usize));
-                                //variants.insert(Kmers::pair(kmer_id.abs()), (mol_id, number+1, order, position as usize));
-                            }
+                            
                         },
                         Some(KmerType::UnpairedHet) => {
                             //het_kmers.insert(kmer_id);
                         },
                         Some(KmerType::Homozygous) => {
                             hom_kmers.insert(kmer_id);
+                            kmer_positions.push((position as usize, kmer_id));
                         },
                         None => { eprintln!("no kmer type? {}", kmer_id); }
                     }
